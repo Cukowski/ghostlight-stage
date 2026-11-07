@@ -16,8 +16,10 @@
   renderer; GPU shadows/material appearance need verification on the target
   device. The scene geometry was also constructed with the WebGL detail level
   for the export check.
-- GitHub Pages workflow included and checked against GitHub documentation;
-  deployment in the user's account has not been performed.
+- Published to https://cukowski.github.io/ghostlight-stage/ from the public
+  repository https://github.com/Cukowski/ghostlight-stage. The first Actions run
+  passed source checks, motion tests and deployment; the live 3D page was opened
+  and verified in the browser.
 
 This validates a visual motion study, not a structure, lifting machine,
 real-time safety system or venue-specific installation.

@@ -1,5 +1,7 @@
 # Ghostlight — Stage Lab
 
+[Live demo](https://cukowski.github.io/ghostlight-stage/) · [Source repository](https://github.com/Cukowski/ghostlight-stage)
+
 A configurable 3D theatre study for a slowly descending microphone and floating
 animatronic head. Built with Three.js. All geometry is procedural; no stock
 models, API keys, accounts, paid plugins, external fonts or runtime CDNs.
@@ -32,7 +34,7 @@ No npm installation or build is required to run the site.
    commit. The job checks the source, runs the physics tests, and deploys `dist`.
 6. The completed Pages job displays the live URL.
 
-The workflow is included but has not been run against your GitHub account.
+The demo is deployed at https://cukowski.github.io/ghostlight-stage/. The included workflow tests and publishes pushes to `main`.
 Paths are relative, so project repositories such as
 `https://USERNAME.github.io/ghostlight-stage/` work without a base-path edit.
 GitHub Pages availability depends on your repository/account plan.
