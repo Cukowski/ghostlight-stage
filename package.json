@@ -1,0 +1,9 @@
+{
+  "name": "ghostlight-stage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A configurable Three.js stage and animatronic motion study.",
+  "scripts": { "test": "node --test tests/*.test.js", "check": "node --check dist/js/app.js && node --check dist/js/scene.js && node --check dist/js/physics.js" },
+  "license": "MIT"
+}

@@ -1,0 +1,214 @@
+# -*- coding: utf-8 -*-
+"""Ghostlight Stage Lab — native FreeCAD reference assembly.
+
+Run from Macro > Macros. The web app can embed its current configuration here.
+Otherwise choose a saved setup JSON, or Cancel to use the defaults.
+Dimensions are metres in JSON, converted to millimetres for FreeCAD.
+This is editable reference geometry, not a FEM or certified rigging model.
+"""
+import json
+import math
+import os
+import FreeCAD as App
+import Part
+try:
+    import FreeCADGui as Gui
+    from PySide import QtGui, QtCore
+    try:
+        from PySide import QtWidgets
+    except ImportError:
+        QtWidgets = QtGui
+except ImportError:
+    Gui = None
+
+EMBEDDED_CONFIG = None
+
+DEFAULT_CONFIG = {
+    "stageWidth": 10.0, "stageDepth": 7.0, "deckHeight": 0.6,
+    "rigHeight": 6.5, "topHeight": 5.3, "bottomHeight": 1.7,
+    "initialHeight": 3.6, "mechanism": "vertical", "headX": -0.85,
+    "headZ": 0.0, "micX": 0.65, "micZ": 0.0, "boomLength": 3.2,
+    "headScale": 1.0, "headMass": 1.2, "micMass": 0.35, "micOffset": 0,
+    "actorVisible": True, "actorX": 0.0, "actorZ": 1.3, "actorHeight": 1.78,
+    "topTilt": -22, "bottomTilt": 32, "jawAngle": 24
+}
+
+def load_config():
+    data = EMBEDDED_CONFIG
+    if data is None and Gui:
+        selected = QtWidgets.QFileDialog.getOpenFileName(
+            None, "Optional: load a Ghostlight setup (Cancel uses defaults)", "", "JSON (*.json)")
+        filename = selected[0] if isinstance(selected, (tuple, list)) else selected
+        if filename:
+            with open(filename, "r", encoding="utf-8") as stream:
+                data = json.load(stream)
+    config = dict(DEFAULT_CONFIG)
+    if data:
+        raw = data.get("config", data)
+        for key in config:
+            if key in raw:
+                value = raw[key]
+                if isinstance(config[key], bool):
+                    config[key] = value is True
+                elif isinstance(config[key], str):
+                    config[key] = str(value)
+                else:
+                    numeric = float(value)
+                    if math.isfinite(numeric):
+                        config[key] = numeric
+    config["headScale"] = min(1.8, max(0.6, config["headScale"]))
+    config["stageWidth"] = min(18, max(6, config["stageWidth"]))
+    config["stageDepth"] = min(14, max(4, config["stageDepth"]))
+    config["deckHeight"] = min(1.5, max(0, config["deckHeight"]))
+    config["rigHeight"] = max(3.5, min(10, config["rigHeight"]))
+    config["topHeight"] = min(config["topHeight"], config["rigHeight"] - 0.65 * config["headScale"])
+    config["bottomHeight"] = min(max(0.65, config["bottomHeight"]), config["topHeight"] - 0.3)
+    config["initialHeight"] = min(config["topHeight"], max(config["bottomHeight"], config["initialHeight"]))
+    config["boomLength"] = max(config["boomLength"], (config["topHeight"] - config["bottomHeight"]) / 2 + 0.25)
+    return config
+
+C = load_config()
+doc = App.newDocument("GhostlightStage")
+doc.Label = "Ghostlight — stage motion reference"
+groups = {}
+for name in ["Stage", "Rigging", "Boom", "Head", "Microphone", "Performer"]:
+    groups[name] = doc.addObject("App::DocumentObjectGroup", name + "Group")
+    groups[name].Label = name
+
+def point(x, y, z):
+    """Web (X,Y-up,Z-to-audience) -> CAD (X,Y-back,Z-up), mm."""
+    return App.Vector(x * 1000, -z * 1000, (y + C["deckHeight"]) * 1000)
+
+def add_shape(name, shape, group, color=(0.55, 0.57, 0.60)):
+    obj = doc.addObject("Part::Feature", name.replace(" ", ""))
+    obj.Label = name
+    obj.Shape = shape
+    groups[group].addObject(obj)
+    if Gui:
+        obj.ViewObject.ShapeColor = color
+        obj.ViewObject.LineColor = (0.16, 0.18, 0.20)
+    return obj
+
+def box(name, size, centre, group, color=(0.55, 0.57, 0.60)):
+    # FreeCAD boxes use X,Y,Z; web depth is converted into CAD Y.
+    width, height, depth = size
+    base = point(centre[0] - width / 2, centre[1] - height / 2, centre[2] + depth / 2)
+    obj = doc.addObject("Part::Box", name.replace(" ", ""))
+    obj.Label = name
+    obj.Length, obj.Width, obj.Height = width * 1000, depth * 1000, height * 1000
+    obj.Placement.Base = base
+    groups[group].addObject(obj)
+    if Gui:
+        obj.ViewObject.ShapeColor = color
+    return obj
+
+def bar(name, start, end, radius, group, color=(0.6, 0.63, 0.65)):
+    a, b = point(*start), point(*end)
+    delta = b - a
+    if delta.Length < 0.01:
+        return None
+    obj = doc.addObject("Part::Cylinder", name.replace(" ", ""))
+    obj.Label = name
+    obj.Radius, obj.Height = radius * 1000, delta.Length
+    obj.Placement = App.Placement(a, App.Rotation(App.Vector(0, 0, 1), delta))
+    groups[group].addObject(obj)
+    if Gui:
+        obj.ViewObject.ShapeColor = color
+    return obj
+
+def ellipsoid(name, centre, radii, group, color):
+    shape = Part.makeSphere(1000)
+    transform = App.Matrix()
+    transform.A11 = radii[0]
+    transform.A22 = radii[2]
+    transform.A33 = radii[1]
+    shape = shape.transformGeometry(transform)
+    shape.translate(point(*centre))
+    return add_shape(name, shape, group, color)
+
+sheet = doc.addObject("Spreadsheet::Sheet", "Dimensions")
+sheet.Label = "Configuration (metres; reference values)"
+sheet.set("A1", "Parameter")
+sheet.set("B1", "Value")
+sheet.set("C1", "Note")
+sheet.set("A2", "Coordinates")
+sheet.set("B2", "CAD: X right, Y back, Z up")
+sheet.set("C2", "Deck top Z = deckHeight; measurements above deck")
+for row, (key, value) in enumerate(C.items(), 3):
+    sheet.set("A" + str(row), key)
+    sheet.set("B" + str(row), str(value))
+sheet.setColumnWidth("A", 180)
+sheet.setColumnWidth("B", 190)
+sheet.setColumnWidth("C", 320)
+sheet.set("C3", "Reference sheet only: edit native geometry, or change JSON and rerun macro.")
+
+dark = (0.15, 0.17, 0.19)
+velvet = (0.32, 0.12, 0.20)
+cream = (0.84, 0.82, 0.76)
+metal = (0.56, 0.61, 0.62)
+deck_h = max(0.05, C["deckHeight"])
+box("Stage deck", (C["stageWidth"], deck_h, C["stageDepth"]), (0, -deck_h / 2, 0), "Stage", dark)
+box("Back drape reference", (C["stageWidth"], C["rigHeight"], 0.035), (0, C["rigHeight"] / 2, -C["stageDepth"] / 2), "Stage", velvet)
+for sign in [-1, 1]:
+    box("Wing drape " + str(sign), (0.6, C["rigHeight"], 0.06), (sign * (C["stageWidth"] / 2 - 0.2), C["rigHeight"] / 2, C["stageDepth"] / 2), "Stage", velvet)
+for z in [0, -C["stageDepth"] / 2 + 0.35, C["stageDepth"] / 2 - 0.65]:
+    for yoff in [-0.15, 0.15]:
+        bar("Truss chord", (-C["stageWidth"] / 2, C["rigHeight"] + yoff, z), (C["stageWidth"] / 2, C["rigHeight"] + yoff, z), 0.025, "Rigging")
+
+h = C["initialHeight"]
+mid = (C["topHeight"] + C["bottomHeight"]) / 2
+arm = C["boomLength"]
+horizontal_top = math.sqrt(max(0.01, arm ** 2 - (C["topHeight"] - mid) ** 2))
+pivot_x, pivot_y = C["headX"] - horizontal_top, mid + 0.65
+horizontal_now = math.sqrt(max(0.01, arm ** 2 - (h - mid) ** 2))
+head_x = pivot_x + horizontal_now if C["mechanism"] == "boom" else C["headX"]
+anchor_y = h + 0.65 if C["mechanism"] == "boom" else C["rigHeight"]
+if C["mechanism"] == "boom":
+    box("Boom base", (1.35, 0.12, 1.25), (pivot_x, 0.06, C["headZ"]), "Boom", dark)
+    bar("Boom mast", (pivot_x, 0.12, C["headZ"]), (pivot_x, pivot_y, C["headZ"]), 0.065, "Boom")
+    bar("Boom arm", (pivot_x, pivot_y, C["headZ"]), (head_x, anchor_y, C["headZ"]), 0.04, "Boom")
+    dx, dy = horizontal_now / arm, (h - mid) / arm
+    rear = (pivot_x - dx * 0.9, pivot_y - dy * 0.9, C["headZ"])
+    bar("Counterweight arm", (pivot_x, pivot_y, C["headZ"]), rear, 0.04, "Boom")
+    box("Counterweight reference", (0.36, 0.43, 0.36), rear, "Boom", dark)
+
+s = C["headScale"]
+head = ellipsoid("Foam shell reference", (head_x, h, C["headZ"]), (0.23 * s, 0.28 * s, 0.215 * s), "Head", cream)
+# Head shape is a closed reference shell; jaw and internals remain separate objects.
+p = (C["topHeight"] - h) / (C["topHeight"] - C["bottomHeight"])
+p = min(1, max(0, p))
+smooth = p * p * (3 - 2 * p)
+pitch_deg = C["topTilt"] + (C["bottomTilt"] - C["topTilt"]) * smooth
+pitch_rad = math.radians(pitch_deg)
+pitched_shape = head.Shape
+pitched_shape.rotate(point(head_x, h, C["headZ"]), App.Vector(1, 0, 0), pitch_deg)
+head.Shape = pitched_shape
+jaw = box("Independent jaw", (0.30 * s, 0.08 * s, 0.18 * s), (head_x, h - 0.16 * s, C["headZ"] + 0.11 * s), "Head", cream)
+jaw_rotation = App.Rotation(App.Vector(1, 0, 0), pitch_deg)
+jaw_centre = point(head_x, h, C["headZ"])
+jaw_base = jaw_centre + jaw_rotation.multVec(jaw.Placement.Base - jaw_centre)
+jaw.Placement = App.Placement(jaw_base, jaw_rotation.multiply(jaw.Placement.Rotation))
+bar("Internal spine", (head_x, h - 0.14 * s, C["headZ"] - 0.13 * s), (head_x, h + 0.17 * s, C["headZ"] - 0.13 * s), 0.016 * s, "Head")
+for sign in [-1, 1]:
+    bar("Yoke upright", (head_x + sign * 0.28 * s, h, C["headZ"]), (head_x + sign * 0.28 * s, h + 0.26 * s, C["headZ"]), 0.012, "Head")
+bar("Yoke bridge", (head_x - 0.28 * s, h + 0.26 * s, C["headZ"]), (head_x + 0.28 * s, h + 0.26 * s, C["headZ"]), 0.012, "Head")
+bar("Head suspension", (head_x, anchor_y, C["headZ"]), (head_x, h + 0.27 * s, C["headZ"]), 0.004, "Rigging")
+
+mic_h = h + s * (-0.075 * math.cos(pitch_rad) - 0.20 * math.sin(pitch_rad)) + C["micOffset"]
+bar("Microphone support line", (C["micX"], C["rigHeight"], C["micZ"]), (C["micX"], mic_h + 0.27, C["micZ"]), 0.004, "Rigging")
+bar("Microphone body", (C["micX"], mic_h + 0.04, C["micZ"]), (C["micX"], mic_h + 0.25, C["micZ"]), 0.03, "Microphone", dark)
+ellipsoid("Microphone capsule", (C["micX"], mic_h, C["micZ"]), (0.052, 0.066, 0.052), "Microphone", metal)
+if C["actorVisible"]:
+    actor = (0.38, 0.47, 0.49)
+    bar("Performer contact envelope", (C["actorX"], 0, C["actorZ"]), (C["actorX"], C["actorHeight"], C["actorZ"]), 0.27, "Performer", actor)
+    ellipsoid("Performer head reference", (C["actorX"], C["actorHeight"] - 0.14, C["actorZ"]), (0.13, 0.15, 0.13), "Performer", actor)
+
+doc.recompute()
+if Gui:
+    Gui.activeDocument().activeView().viewAxonometric()
+    Gui.activeDocument().activeView().fitAll()
+    for obj in doc.Objects:
+        if hasattr(obj, "Shape"):
+            obj.ViewObject.DisplayMode = "Flat Lines"
+    App.Console.PrintMessage("\nGhostlight reference created. Use File > Save As for .FCStd, or select geometry and File > Export for STEP.\n")
+    App.Console.PrintMessage("Edit individual native shapes, or update your web configuration and export a new macro. No structural analysis has been performed.\n")
