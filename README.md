@@ -55,6 +55,11 @@ mesh count and node count validated during the build.
 
 - Drag to orbit, scroll/pinch to zoom, right-drag/two-finger drag to pan.
 - Use Perspective, Front, Side, Top and Head camera presets.
+- Choose **English, Deutsch or 한국어** in the header. Controls, help, status
+  messages and number displays change together; your preference is saved.
+  Switching language keeps the current scene, motion, camera and audio.
+- Use **Hide performer / Show performer** above the view to toggle the reference
+  figure and its contact envelope without resetting the lift or sway.
 - Use **Cutaway** to remove drapes/proscenium and reveal the head internals.
 - Toggle the grid to judge dimensions. Stage coordinates are in metres.
 - On phones, open **Settings** to access the same parameter panel.
@@ -119,6 +124,11 @@ it is not a jerk-limited motion planner.
 
 ## Head animation and dialogue
 
+The procedural foam mannequin has sculpted eye sockets, a nose, cheeks and lips,
+a subtle jaw seam, a short neck and an external support yoke. Its lower jaw
+is a separate mesh; internal lighting, the jaw hinge and pitch axis remain
+independently controllable. The FreeCAD reference uses simplified head solids.
+
 The head has a separate jaw hinge and a pitch axis. Pitch smoothly interpolates
 with actual head height; negative angles look up, positive angles look down.
 **Animate jaw** gives a silent procedural movement test.
@@ -137,7 +147,7 @@ Configuration changes are saved in this browser's local storage. Clearing
 browser data clears that local copy. Save a JSON for durable project versions.
 
 - **Save setup / Load setup**: JSON with settings, current commanded height
-  and camera. Local audio files are excluded.
+  and camera, plus the selected interface language. Local audio files are excluded.
 - **Share setup**: copy a URL containing that configuration in its fragment.
   The recipient needs a running copy of this site. No server-side storage.
   The link includes scene parameters and camera, not the current sway velocities.
@@ -217,10 +227,14 @@ node --loader ./tests/vendor-loader.mjs tests/export-smoke.mjs
 No dependencies need installing. Tests cover configuration limits, boom
 kinematics, cue sequences, speed/height limits, stop/rearm, static load,
 rope constraints, damping, basic actor contact and a complete boom cycle.
+Localization checks cover English, German and Korean catalog completeness,
+placeholders, settings, accessible labels and numeric formatting.
 
 Source layout:
 
 - `dist/js/scene.js`: theatre geometry, lights, cameras, renderers and GLB export.
+- `dist/js/mannequin.js`: sculpted foam head and hinged jaw geometry.
+- `dist/js/i18n.js`: English, German and Korean UI catalogs and locale formatting.
 - `dist/js/physics.js`: configuration, drive, pendulums and contact envelopes.
 - `dist/js/app.js`: parameter panels, operator cues, audio, sharing and exports.
 - `dist/cad/GhostlightStage.FCMacro`: FreeCAD reference generator.

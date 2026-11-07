@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "description": "A configurable Three.js stage and animatronic motion study.",
-  "scripts": { "test": "node --test tests/*.test.js", "check": "node --check dist/js/app.js && node --check dist/js/scene.js && node --check dist/js/physics.js" },
+  "scripts": { "test": "node --test tests/*.test.js", "check": "node --check dist/js/app.js && node --check dist/js/scene.js && node --check dist/js/physics.js && node --check dist/js/mannequin.js && node --check dist/js/i18n.js" },
   "license": "MIT"
 }

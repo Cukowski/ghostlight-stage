@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 import { SVGRenderer } from '../vendor/SVGRenderer.js';
 import { geometry, pitchForHeight } from './physics.js';
+import { buildMannequin } from './mannequin.js';
 
 const Y=new THREE.Vector3(0,1,0);
 export class StageView {
@@ -12,7 +13,7 @@ export class StageView {
     const canvas=document.createElement('canvas');const context=canvas.getContext('webgl2',{antialias:true,preserveDrawingBuffer:true});
     this.software=!context;
     if(context){this.renderer=new THREE.WebGLRenderer({canvas,context,antialias:true,preserveDrawingBuffer:true});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;}
-    else{this.renderer=new SVGRenderer();this.renderer.setQuality('low');document.querySelector('.model-note').textContent='Software 3D · simplified lighting · concept physics';}
+    else{this.renderer=new SVGRenderer();this.renderer.setQuality('low');}
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure=1.05;this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     container.appendChild(this.renderer.domElement);
@@ -115,33 +116,7 @@ export class StageView {
     this.alignmentGeometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(1,0,0)]);
     this.alignmentLine=new THREE.Line(this.alignmentGeometry,new THREE.LineDashedMaterial({color:'#e8b58e',dashSize:.06,gapSize:.07,transparent:true,opacity:.6}));this.stage.add(this.alignmentLine);
   }
-  makeHead(c){
-    this.headRoot=this.empty();this.headRoot.scale.setScalar(c.headScale);this.headPitch=this.empty(this.headRoot);
-    const shell=this.material('#e2ded2',{roughness:.67}),inner=this.material('#262b31'),bracket=this.material('#909b9b',{metalness:.65,roughness:.38});
-    const cranium=this.mesh(new THREE.SphereGeometry(.25,this.software?16:36,this.software?12:26,0,Math.PI*2,0,Math.PI*.79),shell,this.headPitch);cranium.scale.set(.92,1.12,.86);
-    const brow=this.sphere(.12,shell,this.headPitch);brow.scale.set(1.65,.47,.64);brow.position.set(0,.025,.17);
-    const nose=this.mesh(new THREE.ConeGeometry(.04,.11,5),shell,this.headPitch);nose.rotation.x=Math.PI/2;nose.position.set(0,-.01,.23);
-    this.ledMaterial=new THREE.MeshStandardMaterial({color:c.ledColor,emissive:c.ledColor,emissiveIntensity:2,roughness:.3});
-    for(const sign of [-1,1]){
-      const socket=this.sphere(.055,inner,this.headPitch);socket.scale.set(1,.60,.4);socket.position.set(sign*.09,.038,.192);
-      const eye=this.sphere(.027,this.ledMaterial,this.headPitch);eye.scale.set(1,.65,.55);eye.position.set(sign*.09,.038,.213);
-      const ear=this.sphere(.047,shell,this.headPitch);ear.scale.set(.5,1,.65);ear.position.set(sign*.229,-.005,0);
-      this.rod({x:sign*.28,y:.26,z:0},{x:sign*.28,y:0,z:0},.012,bracket,this.headRoot);
-      this.rod({x:sign*.28,y:0,z:0},{x:sign*.23,y:0,z:0},.025,bracket,this.headRoot);
-    }
-    this.rod({x:-.28,y:.26,z:0},{x:.28,y:.26,z:0},.012,bracket,this.headRoot);
-    this.neckAxle=this.rod({x:-.27,y:0,z:0},{x:.27,y:0,z:0},.009,bracket,this.headPitch);
-    const mouth=this.box(.23,.055,.035,inner,this.headPitch);mouth.position.set(0,-.083,.174);
-    this.jaw=this.empty(this.headPitch);this.jaw.position.set(0,-.075,-.04);
-    const mandible=this.sphere(.17,shell,this.jaw);mandible.scale.set(1.02,.42,.82);mandible.position.set(0,-.065,.14);
-    for(let i=0;i<6;i++){const tooth=this.box(.028,.022,.02,shell,this.jaw);tooth.position.set((i-2.5)*.031,-.012,.245);}
-    const halo=this.mesh(new THREE.TorusGeometry(.238,.010,8,64),this.ledMaterial,this.headPitch);halo.rotation.x=Math.PI/2;halo.position.y=.12;
-    this.headLight=new THREE.PointLight(c.ledColor,1.5,2,2);this.headLight.position.set(0,0,.26);this.headRoot.add(this.headLight);
-    this.internals=this.empty(this.headPitch);
-    const servo=this.box(.07,.095,.10,this.material('#3b6f83'),this.internals);servo.position.set(.08,-.01,-.13);
-    const spine=this.box(.05,.32,.035,bracket,this.internals);spine.position.set(0,.01,-.14);
-    this.headShell=cranium;
-  }
+  makeHead(c){Object.assign(this,buildMannequin(this,c));}
   makeMicrophone(){
     this.micRoot=this.empty();const m=this.material('#272b30',{metalness:.5,roughness:.45});
     const handle=this.mesh(new THREE.CylinderGeometry(.031,.025,.20,20),m,this.micRoot);handle.position.y=.13;
@@ -153,7 +128,7 @@ export class StageView {
     const modes={midnight:{ambient:.65,colors:['#ffd1ac','#a2d8f5','#9e8cdb'],intensity:[125,105,125],exposure:1.1},warm:{ambient:.8,colors:['#ffcc91','#ffe0ad','#faac88'],intensity:[140,110,85],exposure:1.15},worklight:{ambient:1.8,colors:['#eaf4ff','#eaf4ff','#d5e3f1'],intensity:[125,125,125],exposure:1.3}};
     const p=modes[preset]||modes.midnight;this.ambient.intensity=p.ambient;this.spots.forEach((s,i)=>{s.color.set(p.colors[i]);s.intensity=p.intensity[i];});this.renderer.toneMappingExposure=p.exposure;
   }
-  setVisibility(c){this.grid.visible=c.grid;this.masking.visible=!c.engineering;this.boom.visible=c.mechanism==='boom';this.actor.visible=c.actorVisible;this.internals.visible=c.engineering;this.headShell.material.transparent=c.engineering;this.headShell.material.opacity=c.engineering?.40:1;this.alignmentLine.visible=c.engineering;}
+  setVisibility(c){this.dirty=true;this.grid.visible=c.grid;this.masking.visible=!c.engineering;this.boom.visible=c.mechanism==='boom';this.actor.visible=c.actorVisible;this.internals.visible=c.engineering;this.headShell.material.transparent=c.engineering;this.headShell.material.opacity=c.engineering?.40:1;this.alignmentLine.visible=c.engineering;}
   update(sim,jawOpen=0){
     if(this.followHead&&this.previousHead){const current=new THREE.Vector3(sim.head.p.x,sim.head.p.y+sim.config.deckHeight,sim.head.p.z),delta=current.clone().sub(this.previousHead);this.camera.position.add(delta);this.controls.target.add(delta);this.previousHead.copy(current);}
     this.controls.update();
@@ -165,11 +140,11 @@ export class StageView {
     const c=sim.config,g=geometry(c,sim.driver.height);this.headRoot.position.copy(sim.head.p);this.micRoot.position.copy(sim.mic.p);
     this.headPitch.rotation.x=pitchForHeight(c,sim.head.p.y);this.jaw.rotation.x=jawOpen*c.jawAngle*Math.PI/180;
     this.arm.rotation.z=g.boomAngle;
-    const endpoint={x:sim.head.p.x,y:sim.head.p.y+.27*c.headScale,z:sim.head.p.z};this.setRod(this.headCable,g.headAnchor,endpoint);
+    const endpoint={x:sim.head.p.x,y:sim.head.p.y+.33*c.headScale,z:sim.head.p.z};this.setRod(this.headCable,g.headAnchor,endpoint);
     this.setRod(this.controlTether,{x:g.headAnchor.x+.035,y:g.headAnchor.y,z:g.headAnchor.z-.04},{x:endpoint.x+.035,y:endpoint.y,z:endpoint.z-.04});
     this.setRod(this.micCable,g.micAnchor,{x:sim.mic.p.x,y:sim.mic.p.y+.275,z:sim.mic.p.z});
     const col=new THREE.Color(c.ledColor);if(c.colorCycle)col.setHSL((sim.time*.008+.44)%1,.65,.57);
-    this.ledMaterial.color.copy(col);this.ledMaterial.emissive.copy(col);this.ledMaterial.emissiveIntensity=c.ledBrightness*2.5;this.headLight.color.copy(col);this.headLight.intensity=c.ledBrightness*1.5;
+    this.ledMaterial.color.set('#bfcac4');this.ledMaterial.emissive.copy(col);this.ledMaterial.emissiveIntensity=c.ledBrightness*.35;this.headLight.color.copy(col);this.headLight.intensity=c.ledBrightness*(this.software?.08:.45);this.foamMaterial.emissive.copy(this.software?new THREE.Color('#000000'):col);this.foamMaterial.emissiveIntensity=c.ledBrightness*.035;
     const metric=sim.metrics();this.actorMat.color.set(metric.contact?'#bd7959':'#63767b');this.actorRing.material.color.set(metric.clearance<.15?'#ed9567':'#829d9d');
     this.scene.updateMatrixWorld(true);
     const mouth=this.headPitch.localToWorld(new THREE.Vector3(0,-.075,.20));

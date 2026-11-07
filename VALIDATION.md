@@ -1,7 +1,9 @@
 # Verification — 7 November 2026
 
 - JavaScript source syntax checks passed.
-- 10 motion/physics tests passed, including a complete boom cue cycle.
+- 14 tests passed: 10 motion/physics tests (including a complete boom cue cycle)
+  and 4 localization checks for complete catalogs, placeholders, settings,
+  accessible labels and localized numbers.
 - Complete high-detail scene generated without a graphics context; GLB header,
   version, length and JSON chunk validated, with more than 200 mesh nodes.
 - Browser: stage rendered, mechanism switching, camera presets, cutaway,
@@ -9,7 +11,12 @@
 - Configuration JSON downloaded through the browser.
 - GLB conversion completion observed in the browser; full GLB binary
   serialization independently verified by the Node export check.
-- A 390 × 844 iframe used to inspect the responsive phone layout.
+- A 390 × 844 iframe used to inspect English, German and Korean phone layouts,
+  including wrapped operator controls, translated settings and localized help.
+- Language changes during descent preserved the active cue and pose; the
+  selected language persisted after reload. German numeric inputs stayed valid.
+- Hide/show performer changed visibility and the clearance readout without
+  resetting the lift. The revised foam mannequin and jaw test were inspected.
 - Python syntax check passed for the FreeCAD macro, including its embedded
   configuration form. Execution within FreeCAD was not available to test.
 - The environment's browser disabled WebGL. Browser checks used the software
