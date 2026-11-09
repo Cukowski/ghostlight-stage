@@ -1,8 +1,8 @@
 import { DEFAULTS, sanitizeConfig, StageSimulation } from './physics.js';
 import { StageView } from './scene.js';
-import { getLanguage, setLanguage, t, translateDOM, formatNumber } from './i18n.js';
+import { getLanguage, setLanguage, t, translateDOM, formatNumber } from './i18n.js?v=audio-1';
 
-import { AudioPlayer } from './audio.js';
+import { AudioPlayer } from './audio.js?v=audio-1';
 
 const $=id=>document.getElementById(id);
 const STORAGE='ghostlight-stage-v1';
