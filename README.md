@@ -133,13 +133,18 @@ The head has a separate jaw hinge and a pitch axis. Pitch smoothly interpolates
 with actual head height; negative angles look up, positive angles look down.
 **Animate jaw** gives a silent procedural movement test.
 
-Choose a local audio file in Head → Voice synchronisation, then press Play audio.
-The Web Audio analyser maps its amplitude to jaw opening with a noise gate and
-attack/release smoothing. This is an approximate speaking effect, not phoneme
-or word recognition. Audio is neither uploaded nor included in exports.
-Audio playback runs in wall time; use **1×** when assessing voice/motion timing.
-The movement cue does not automatically start or time-stretch audio.
-Backgrounding the page pauses audio and suspends simulation stepping.
+Open **Audio** above the stage to choose a local file or enter a direct HTTPS
+audio link. The player shows track length, position and time left at the chosen
+speed. Seek, skip by five seconds, restart, adjust volume or speed, and loop
+the track. Closing the panel keeps playback running.
+
+**Start show with audio** starts a new show from the current height and plays
+the paused track from its selected position. Both start at 1× and have separate
+controls after launch. The simulated stop and backgrounding the tab pause audio.
+
+With a local file, **Drive jaw** maps its amplitude to jaw opening with a noise
+gate and smoothing. Local audio stays on your device. Audio sources and player
+settings are excluded from setup exports and share links.
 
 ## Save and export
 

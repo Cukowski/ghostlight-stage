@@ -28,3 +28,52 @@ html[lang=ko]{font-family:Inter,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans
 @media(max-width:359px){.app-header{padding:0 10px}.header-actions{gap:4px}.header-actions>.button{font-size:10px;padding:7px}.language-control select{max-width:76px;font-size:11px}.brand-mark{width:29px}.playback-buttons .button{padding:8px 5px;font-size:9px}.transport{padding-left:10px;padding-right:10px}.telemetry{padding-left:10px;padding-right:10px}}
 
 @media(max-height:520px){body{overflow:auto}.workspace{height:auto;min-height:650px}.stage-workspace{min-height:650px}.settings-panel{max-height:650px}}
+
+/* The audio panel leaves the stage and motion transport available. */
+.audio-panel {
+  position: fixed;
+  inset: 88px 16px auto auto;
+  margin: 0;
+  z-index: 35;
+  width: min(390px, calc(100% - 32px));
+  max-height: calc(100dvh - 215px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid #525961;
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 12px 40px #0009;
+}
+.audio-panel .button { white-space: normal; min-height: 34px; }
+.audio-sources { display: grid; gap: 10px; margin-top: 14px; }
+.audio-sources summary { cursor: pointer; font-size: 12px; color: var(--mint); }
+#audio-link-form { display: flex; gap: 6px; margin-top: 8px; }
+#audio-link-form input { width: 100%; min-width: 0; }
+.audio-panel select, #audio-link {
+  padding: 6px 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.audio-track { margin: 14px 0 4px; font-size: 13px; overflow-wrap: anywhere; }
+#audio-seek { margin: 6px 0 0; }
+.audio-times, .audio-toggles { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.audio-times { justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.audio-transport { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.audio-options { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 12px 0; }
+.audio-options select { grid-column: 2 / -1; }
+.audio-options, .audio-toggles { font-size: 12px; }
+.audio-toggles label { display: inline-flex; align-items: center; gap: 4px; }
+.audio-toggles input { accent-color: var(--accent); }
+.audio-cue { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; }
+#audio-status { color: var(--accent); }
+@media (max-width: 720px) {
+  .audio-panel { inset: 72px 10px auto auto; width: min(390px, calc(100% - 20px)); max-height: calc(100dvh - 195px); }
+  #audio-link { font-size: 16px; }
+  #open-audio { gap: 4px; }
+}
+@media (max-height: 460px) {
+  .audio-panel { inset-block-start: 12px; max-height: calc(100dvh - 24px); }
+}

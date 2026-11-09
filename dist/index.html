@@ -24,7 +24,7 @@
       <div class="panel-footer"><button id="save-button" class="button"><span data-i18n="Save setup">Save setup</span></button><button id="load-button" class="button"><span data-i18n="Load setup">Load setup</span></button><input id="config-file" type="file" accept="application/json,.json" hidden><p><span data-i18n="Saved in this browser · dimensions in metres">Saved in this browser · dimensions in metres</span></p></div>
     </aside>
     <section class="stage-workspace" aria-label="Stage simulator" data-i18n-label="Stage simulator">
-      <div class="viewport-bar"><div class="view-tabs" aria-label="Camera views" data-i18n-label="Camera views"><button data-camera="audience" class="active"><span data-i18n="Perspective">Perspective</span></button><button data-camera="front"><span data-i18n="Front">Front</span></button><button data-camera="side"><span data-i18n="Side">Side</span></button><button data-camera="top"><span data-i18n="Top">Top</span></button><button data-camera="head"><span data-i18n="Head">Head</span></button></div><div class="viewport-tools"><button id="performer-button" class="button compact" aria-pressed="false"><span data-i18n="Hide performer">Hide performer</span></button><button id="grid-button" class="icon-button" title="Toggle stage grid" aria-pressed="false" data-i18n-title="Toggle stage grid">▦</button><button id="cutaway-button" class="button compact" aria-pressed="false"><span data-i18n="Cutaway">Cutaway</span></button></div></div>
+      <div class="viewport-bar"><div class="view-tabs" aria-label="Camera views" data-i18n-label="Camera views"><button data-camera="audience" class="active"><span data-i18n="Perspective">Perspective</span></button><button data-camera="front"><span data-i18n="Front">Front</span></button><button data-camera="side"><span data-i18n="Side">Side</span></button><button data-camera="top"><span data-i18n="Top">Top</span></button><button data-camera="head"><span data-i18n="Head">Head</span></button></div><div class="viewport-tools"><button id="open-audio" class="button compact" aria-controls="audio-panel" aria-expanded="false"><span aria-hidden="true">♫</span><span data-i18n="Audio">Audio</span></button><button id="performer-button" class="button compact" aria-pressed="false"><span data-i18n="Hide performer">Hide performer</span></button><button id="grid-button" class="icon-button" title="Toggle stage grid" aria-pressed="false" data-i18n-title="Toggle stage grid">▦</button><button id="cutaway-button" class="button compact" aria-pressed="false"><span data-i18n="Cutaway">Cutaway</span></button></div></div>
       <div class="viewport-wrap">
         <div id="viewport" class="viewport" aria-label="Interactive 3D stage. Drag to orbit; scroll to zoom; right-drag to pan." data-i18n-label="Interactive 3D stage. Drag to orbit; scroll to zoom; right-drag to pan."></div>
         <div class="view-tag"><span class="live-dot"></span><span id="mechanism-label"><span data-i18n="VERTICAL SUSPENSION">VERTICAL SUSPENSION</span></span></div>
@@ -43,7 +43,55 @@
   </main>
 <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title"><div class="help-heading"><h2 id="help-title"><span data-i18n="Explore the stage">Explore the stage</span></h2><button id="close-help" class="button"><span data-i18n="Close">Close</span></button></div><p><span data-i18n="Drag to orbit, scroll or pinch to zoom, and use the camera buttons for fixed views.">Drag to orbit, scroll or pinch to zoom, and use the camera buttons for fixed views.</span></p><p><span data-i18n="Use Motion to choose suspension or boom, set travel limits, and adjust descent and return speeds.">Use Motion to choose suspension or boom, set travel limits, and adjust descent and return speeds.</span></p><p><span data-i18n="Use Head to test the jaw, change lighting, or choose a dialogue audio file.">Use Head to test the jaw, change lighting, or choose a dialogue audio file.</span></p><p><span data-i18n="Use Stage to change dimensions and positions. Hide performer removes the reference figure and its contact envelope.">Use Stage to change dimensions and positions. Hide performer removes the reference figure and its contact envelope.</span></p><p><span data-i18n="Save setup keeps a reusable JSON file. Load setup restores it. Share setup copies a link with your scene settings.">Save setup keeps a reusable JSON file. Load setup restores it. Share setup copies a link with your scene settings.</span></p><p><span data-i18n="This is a motion and rough clearance study. It does not validate structures or lifting equipment.">This is a motion and rough clearance study. It does not validate structures or lifting equipment.</span></p></dialog>
   <div id="toast" class="toast" role="status" hidden></div>
-  <input id="audio-file" type="file" accept="audio/*" hidden>
+  <dialog id="audio-panel" class="audio-panel" aria-labelledby="audio-title">
+    <div class="help-heading">
+      <h2 id="audio-title" data-i18n="Audio player">Audio player</h2>
+      <button id="close-audio" class="button compact" data-i18n="Close">Close</button>
+    </div>
+    <div class="audio-sources">
+      <button id="choose-audio" class="button" data-i18n="Choose audio file">Choose audio file</button>
+      <details>
+        <summary data-i18n="Use an audio link">Use an audio link</summary>
+        <form id="audio-link-form">
+          <label for="audio-link" class="sr-only" data-i18n="Direct audio URL">Direct audio URL</label>
+          <input id="audio-link" type="url" placeholder="https://example.com/track.mp3" required>
+          <button class="button compact" data-i18n="Load link">Load link</button>
+        </form>
+        <p class="control-note" data-i18n="Use a direct HTTPS audio link, such as an MP3 file.">Use a direct HTTPS audio link, such as an MP3 file.</p>
+      </details>
+    </div>
+    <p id="audio-track" class="audio-track"></p>
+    <p id="audio-status" class="control-note" role="status" hidden></p>
+    <label for="audio-seek" class="sr-only" data-i18n="Track position">Track position</label>
+    <input id="audio-seek" type="range" min="0" max="1" step="0.01" value="0" disabled>
+    <div class="audio-times"><span id="audio-time">0:00 / —</span><span id="audio-remaining"></span></div>
+    <div class="audio-transport">
+      <button id="audio-restart" class="button compact" data-i18n="Restart track" disabled>Restart track</button>
+      <button id="audio-back" class="button compact" data-i18n-label="Back five seconds" aria-label="Back five seconds" disabled>−5 s</button>
+      <button id="audio-play" class="button primary compact" disabled></button>
+      <button id="audio-forward" class="button compact" data-i18n-label="Forward five seconds" aria-label="Forward five seconds" disabled>+5 s</button>
+    </div>
+    <div class="audio-options">
+      <label for="audio-volume" data-i18n="Volume">Volume</label>
+      <input id="audio-volume" type="range" min="0" max="100" value="100">
+      <output id="audio-volume-value" for="audio-volume">100%</output>
+      <label for="audio-rate" data-i18n="Playback speed">Playback speed</label>
+      <select id="audio-rate">
+        <option value="0.5">0.5×</option><option value="0.75">0.75×</option>
+        <option value="1" selected>1×</option><option value="1.25">1.25×</option>
+        <option value="1.5">1.5×</option><option value="2">2×</option>
+      </select>
+    </div>
+    <div class="audio-toggles">
+      <label><input id="audio-loop" type="checkbox"><span data-i18n="Loop track">Loop track</span></label>
+      <label><input id="audio-jaw" type="checkbox" checked disabled><span data-i18n="Drive jaw (local file)">Drive jaw (local file)</span></label>
+    </div>
+    <div class="audio-cue">
+      <button id="audio-start-show" class="button compact" data-i18n="Start show with audio" disabled>Start show with audio</button>
+      <p class="control-note" data-i18n="Starts the show from the current height and plays from the track position. Both start at 1×, then use separate controls.">Starts the show from the current height and plays from the track position. Both start at 1×, then use separate controls.</p>
+    </div>
+    <input id="audio-file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac" hidden>
+  </dialog>
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
