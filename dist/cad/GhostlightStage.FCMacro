@@ -30,7 +30,8 @@ DEFAULT_CONFIG = {
     "headZ": 0.0, "micX": 0.65, "micZ": 0.0, "boomLength": 3.2,
     "headScale": 1.0, "headMass": 1.2, "micMass": 0.35, "micOffset": 0,
     "actorVisible": True, "actorX": 0.0, "actorZ": 1.3, "actorHeight": 1.78,
-    "topTilt": -22, "bottomTilt": 32, "jawAngle": 24
+    "topTilt": -22, "bottomTilt": 32, "jawAngle": 24,
+    "headFacing": "microphone", "headYaw": 0
 }
 
 def load_config():
@@ -56,6 +57,9 @@ def load_config():
                     numeric = float(value)
                     if math.isfinite(numeric):
                         config[key] = numeric
+    config["headYaw"] = min(180, max(-180, config["headYaw"]))
+    if config["headFacing"] not in ("microphone", "manual"):
+        config["headFacing"] = "microphone"
     config["headScale"] = min(1.8, max(0.6, config["headScale"]))
     config["stageWidth"] = min(18, max(6, config["stageWidth"]))
     config["stageDepth"] = min(14, max(4, config["stageDepth"]))
@@ -192,6 +196,16 @@ bar("Internal spine", (head_x, h - 0.14 * s, C["headZ"] - 0.13 * s), (head_x, h 
 for sign in [-1, 1]:
     bar("Yoke upright", (head_x + sign * 0.28 * s, h, C["headZ"]), (head_x + sign * 0.28 * s, h + 0.26 * s, C["headZ"]), 0.012, "Head")
 bar("Yoke bridge", (head_x - 0.28 * s, h + 0.26 * s, C["headZ"]), (head_x + 0.28 * s, h + 0.26 * s, C["headZ"]), 0.012, "Head")
+# Web Y-up yaw maps to rotation around CAD Z.
+yaw_rad = math.radians(C["headYaw"])
+dx, dz = C["micX"] - head_x, C["micZ"] - C["headZ"]
+if C["headFacing"] == "microphone" and math.hypot(dx, dz) > 1e-6:
+    yaw_rad += math.atan2(dx, dz)
+yaw_rotation = App.Rotation(App.Vector(0, 0, 1), math.degrees(yaw_rad))
+yaw_centre = point(head_x, h, C["headZ"])
+for part in groups["Head"].Group:
+    base = yaw_centre + yaw_rotation.multVec(part.Placement.Base - yaw_centre)
+    part.Placement = App.Placement(base, yaw_rotation.multiply(part.Placement.Rotation))
 bar("Head suspension", (head_x, anchor_y, C["headZ"]), (head_x, h + 0.27 * s, C["headZ"]), 0.004, "Rigging")
 
 mic_h = h + s * (-0.075 * math.cos(pitch_rad) - 0.20 * math.sin(pitch_rad)) + C["micOffset"]

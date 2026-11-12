@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 import { SVGRenderer } from '../vendor/SVGRenderer.js';
-import { geometry, pitchForHeight } from './physics.js';
+import { geometry, pitchForHeight, yawForHead } from './physics.js?v=yaw-1';
 import { buildMannequin } from './mannequin.js';
 
 const Y=new THREE.Vector3(0,1,0);
@@ -134,10 +134,11 @@ export class StageView {
     this.controls.update();
     const stamp=performance.now();
     if(this.software&&this.lastDraw&&stamp-this.lastDraw<100)return;
-    const key=[...this.camera.position.toArray(),...this.camera.quaternion.toArray(),sim.head.p.x,sim.head.p.y,sim.head.p.z,sim.mic.p.x,sim.mic.p.y,sim.mic.p.z,sim.driver.height,jawOpen,sim.config.ledBrightness,sim.config.colorCycle?sim.time:0,sim.config.ledColor,sim.metrics().contact].map(x=>typeof x==='number'?Math.round(x*10000):x).join(',');
+    const key=[...this.camera.position.toArray(),...this.camera.quaternion.toArray(),sim.head.p.x,sim.head.p.y,sim.head.p.z,sim.mic.p.x,sim.mic.p.y,sim.mic.p.z,sim.driver.height,jawOpen,sim.config.headFacing,sim.config.headYaw,sim.config.ledBrightness,sim.config.colorCycle?sim.time:0,sim.config.ledColor,sim.metrics().contact].map(x=>typeof x==='number'?Math.round(x*10000):x).join(',');
     if(this.software&&!this.dirty&&key===this.lastKey)return;
     this.lastKey=key;this.lastDraw=stamp;this.dirty=false;
     const c=sim.config,g=geometry(c,sim.driver.height);this.headRoot.position.copy(sim.head.p);this.micRoot.position.copy(sim.mic.p);
+    this.headRoot.rotation.y = yawForHead(c, sim.head.p, sim.mic.p);
     this.headPitch.rotation.x=pitchForHeight(c,sim.head.p.y);this.jaw.rotation.x=jawOpen*c.jawAngle*Math.PI/180;
     this.arm.rotation.z=g.boomAngle;
     const endpoint={x:sim.head.p.x,y:sim.head.p.y+.33*c.headScale,z:sim.head.p.z};this.setRod(this.headCable,g.headAnchor,endpoint);

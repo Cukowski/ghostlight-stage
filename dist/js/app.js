@@ -1,8 +1,8 @@
-import { DEFAULTS, sanitizeConfig, StageSimulation } from './physics.js';
-import { StageView } from './scene.js';
-import { getLanguage, setLanguage, t, translateDOM, formatNumber } from './i18n.js?v=audio-1';
+import { DEFAULTS, sanitizeConfig, StageSimulation } from './physics.js?v=yaw-1';
+import { StageView } from './scene.js?v=yaw-1';
+import { getLanguage, setLanguage, t, translateDOM, formatNumber } from './i18n.js?v=yaw-1';
 
-import { AudioPlayer } from './audio.js?v=audio-1';
+import { AudioPlayer } from './audio.js?v=yaw-1';
 
 const $=id=>document.getElementById(id);
 const STORAGE='ghostlight-stage-v1';
@@ -43,6 +43,14 @@ const PANELS={
   ],
   head:[
     {title:'The floating head',fields:[number('headScale','Head size',.6,1.8,.05,'×'),number('headMass','Moving head mass',.2,8,.1,'kg'),number('micMass','Mic + moving cable',.05,2,.05,'kg')],note:'The foam mannequin has a smooth face and a hinged lower jaw.'},
+    {
+      title: 'Head direction',
+      fields: [
+        select('headFacing', 'Facing mode', [['microphone', 'Face microphone'], ['manual', 'Manual direction']]),
+        number('headYaw', 'Turn angle / offset', -180, 180, 5, '°')
+      ],
+      note: 'Face microphone follows its position; the angle adds an offset. In manual mode, 0° faces the audience, +90° audience-right, −90° audience-left and 180° backstage.'
+    },
     {title:'Expression',fields:[number('topTilt','Pitch at the top',-60,30,1,'°'),number('bottomTilt','Pitch at the bottom',-20,70,1,'°'),number('jawAngle','Maximum jaw opening',0,45,1,'°')],note:'Negative pitch looks up; positive pitch looks down. The pitch follows actual head height.',custom:'jaw'},
     {title:'Voice synchronisation',custom:'audio',note:'A local audio file can drive the jaw from its volume. Enable Drive jaw in the audio player.'},
     {title:'Internal light',fields:[{key:'ledColor',label:'LED colour',type:'color'},number('ledBrightness','Brightness',0,100,5,'%',100),toggle('colorCycle','Slow colour cycle')]}

@@ -132,6 +132,12 @@ independently controllable. The FreeCAD reference uses simplified head solids.
 The head has a separate jaw hinge and a pitch axis. Pitch smoothly interpolates
 with actual head height; negative angles look up, positive angles look down.
 **Animate jaw** gives a silent procedural movement test.
+In Head → Head direction, **Face microphone** turns the head around its vertical
+axis to follow the mic. **Manual direction** sets a fixed orientation.
+The turn angle is an offset in microphone mode and an absolute angle in manual
+mode. Zero faces the audience, +90° audience-right, −90° audience-left and 180°
+backstage. Saved setups, shared links, GLB and FreeCAD exports include this
+orientation. The CSV includes yaw in degrees.
 
 Open **Audio** above the stage to choose a local file or enter a direct HTTPS
 audio link. The player shows track length, position and time left at the chosen

@@ -8,6 +8,7 @@ export const DEFAULTS = Object.freeze({
   gravity: 9.81, damping: 0.22, collisions: true,
   actorVisible: true, actorX: 0, actorZ: 1.3, actorHeight: 1.78,
   topTilt: -22, bottomTilt: 32, jawAngle: 24,
+  headFacing: 'microphone', headYaw: 0,
   ledColor: '#70e5d4', ledBrightness: 0.8, colorCycle: false,
   lightPreset: 'midnight', grid: false, engineering: false, labels: true,
   previewSpeed: 20
@@ -19,7 +20,7 @@ const LIMITS = {
   boomLength:[1,7],headScale:[0.6,1.8],headMass:[0.2,8],micMass:[0.05,2],micOffset:[-0.7,0.7],
   downSpeed:[0.001,0.08],upSpeed:[0.005,0.2],acceleration:[0.005,0.2],holdDuration:[0,120],
   gravity:[1,15],damping:[0,2],actorX:[-7,7],actorZ:[-5,5],actorHeight:[1,2.2],
-  topTilt:[-60,30],bottomTilt:[-20,70],jawAngle:[0,45],ledBrightness:[0,1],previewSpeed:[1,100]
+  topTilt:[-60,30],bottomTilt:[-20,70],jawAngle:[0,45],headYaw:[-180,180],ledBrightness:[0,1],previewSpeed:[1,100]
 };
 export const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export const approach=(x,target,d)=>x<target?Math.min(x+d,target):Math.max(x-d,target);
@@ -30,6 +31,7 @@ export function sanitizeConfig(input={}) {
     if(key in LIMITS){const n=Number(input[key]);if(Number.isFinite(n))out[key]=clamp(n,...LIMITS[key]);}
     else if(typeof DEFAULTS[key]==='boolean')out[key]=input[key]===true;
   }
+  if(['microphone','manual'].includes(input.headFacing))out.headFacing=input.headFacing;
   if(['vertical','boom'].includes(input.mechanism))out.mechanism=input.mechanism;
   if(['midnight','warm','worklight'].includes(input.lightPreset))out.lightPreset=input.lightPreset;
   if(/^#[a-f\d]{6}$/i.test(input.ledColor||''))out.ledColor=input.ledColor;
@@ -45,6 +47,16 @@ export function pitchForHeight(c,h) {
   const p=clamp((c.topHeight-h)/(c.topHeight-c.bottomHeight),0,1);
   const smooth=p*p*(3-2*p);
   return (c.topTilt+(c.bottomTilt-c.topTilt)*smooth)*Math.PI/180;
+}
+// Yaw turns around world up before the local pitch and jaw rotations.
+export function yawForHead(config, head, microphone) {
+  let angle = config.headYaw * Math.PI / 180;
+  const dx = microphone.x - head.x;
+  const dz = microphone.z - head.z;
+  if (config.headFacing === 'microphone' && Math.hypot(dx, dz) > 1e-6) {
+    angle += Math.atan2(dx, dz);
+  }
+  return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 export function mouthOffset(c,h){const a=pitchForHeight(c,h);return c.headScale*(-0.075*Math.cos(a)-0.20*Math.sin(a));}
 export function geometry(c,h) {
@@ -157,7 +169,7 @@ export class StageSimulation {
     this.peakTension=Math.max(this.peakTension,this.head.tension+this.mic.tension);
     if(this.time>=this.nextSample){this.nextSample=this.time+0.1;this.trace.push(this.sample());if(this.trace.length>36000)this.trace.shift();}
   }
-  sample(){return {time:this.time,commandHeight:this.driver.height,headX:this.head.p.x,headY:this.head.p.y,headZ:this.head.p.z,micX:this.mic.p.x,micY:this.mic.p.y,micZ:this.mic.p.z,headTension:this.head.tension,micTension:this.mic.tension,sway:this.head.sway(),pitch:pitchForHeight(this.config,this.head.p.y)*180/Math.PI};}
+  sample(){return {time:this.time,commandHeight:this.driver.height,headX:this.head.p.x,headY:this.head.p.y,headZ:this.head.p.z,micX:this.mic.p.x,micY:this.mic.p.y,micZ:this.mic.p.z,headTension:this.head.tension,micTension:this.mic.tension,sway:this.head.sway(),yaw:yawForHead(this.config,this.head.p,this.mic.p)*180/Math.PI,pitch:pitchForHeight(this.config,this.head.p.y)*180/Math.PI};}
   metrics(){const c=this.config;const g=geometry(c,this.driver.height);const clearance=c.actorVisible?Math.min(cylinderClearance(this.head.p,this.head.radius,c),cylinderClearance(this.mic.p,this.mic.radius,c)):Infinity;
     const outside=Math.abs(this.head.p.x)+this.head.radius>c.stageWidth/2||Math.abs(this.head.p.z)+this.head.radius>c.stageDepth/2||Math.abs(this.mic.p.x)>c.stageWidth/2||Math.abs(this.mic.p.z)>c.stageDepth/2;
     return {heightError:this.head.p.y+mouthOffset(c,this.head.p.y)+c.micOffset-this.mic.p.y,clearance,outside,sway:this.head.sway(),contact:this.time-this.lastContact<0.6,tension:this.head.tension+this.mic.tension,payloadMoment:c.headMass*c.gravity*g.horizontal};}

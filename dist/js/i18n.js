@@ -11,6 +11,14 @@ const LOCALES = { en: 'en-GB', de: 'de-DE', ko: 'ko-KR' };
 // Each row has an English source, a German translation and a Korean translation.
 // Keeping the languages together makes missing translations visible during edits.
 const MESSAGES = [
+  ['Head direction', 'Blickrichtung', '머리 방향'],
+  ['Facing mode', 'Richtungsmodus', '방향 모드'],
+  ['Face microphone', 'Zum Mikrofon', '마이크 바라보기'],
+  ['Manual direction', 'Manuelle Richtung', '수동 방향'],
+  ['Turn angle / offset', 'Drehwinkel / Versatz', '회전 각도 / 오프셋'],
+  ['Face microphone follows its position; the angle adds an offset. In manual mode, 0° faces the audience, +90° audience-right, −90° audience-left and 180° backstage.',
+   '„Zum Mikrofon“ folgt dessen Position. Der Winkel fügt einen Versatz hinzu. Im manuellen Modus zeigt 0° zum Publikum, +90° aus Publikumssicht nach rechts, −90° nach links und 180° nach hinten.',
+   '마이크 바라보기는 마이크 위치를 따라 회전하며 설정한 각도를 더합니다. 수동 모드에서 0°는 관객 방향, +90°는 관객 기준 오른쪽, −90°는 왼쪽, 180°는 무대 뒤쪽입니다.'],
   ['Audio', 'Audio', '오디오'],
   ['Audio player', 'Audioplayer', '오디오 플레이어'],
   ['Choose audio file', 'Audiodatei auswählen', '오디오 파일 선택'],

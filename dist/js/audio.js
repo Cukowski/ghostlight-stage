@@ -1,4 +1,4 @@
-import { formatNumber, t } from './i18n.js?v=audio-1';
+import { formatNumber, t } from './i18n.js?v=yaw-1';
 
 function clock(seconds) {
   if (!Number.isFinite(seconds)) return '—';
